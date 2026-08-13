@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ShieldHER — Personal Safety Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">◈</span>
+      <span class="brand-name">ShieldHER</span>
+    </div>
+    <div class="status-pill" id="statusPill">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">Not monitoring</span>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <!-- SOS core -->
+    <section class="sos-zone">
+      <div class="rings" id="rings" aria-hidden="true">
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+      </div>
+      <button class="sos-btn" id="sosBtn">
+        <span class="sos-label">SOS</span>
+        <span class="sos-sub">Press &amp; hold to alert</span>
+      </button>
+      <p class="sos-hint">Or say nothing — ShieldHER listens for distress sounds and can alert your contacts automatically.</p>
+    </section>
+
+    <!-- Controls -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Audio Guard</h2>
+        <label class="switch">
+          <input type="checkbox" id="audioToggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p class="panel-desc">Listens locally for sudden loud sounds or sustained screaming. Nothing is recorded or sent anywhere unless an alert triggers.</p>
+      <div class="meter">
+        <div class="meter-fill" id="meterFill"></div>
+      </div>
+      <p class="meter-label"><span id="meterVal">0</span>% ambient level · threshold <span id="thresholdVal">72</span>%</p>
+      <input type="range" id="thresholdSlider" min="40" max="95" value="72" class="slider-input" />
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Location</h2>
+        <button class="ghost-btn" id="refreshLoc">Refresh</button>
+      </div>
+      <p class="panel-desc" id="locText">Location not yet shared.</p>
+      <a href="#" target="_blank" rel="noopener" id="mapLink" class="map-link hidden">Open in Maps →</a>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Emergency Contacts</h2>
+      </div>
+      <form id="contactForm" class="contact-form">
+        <input type="text" id="contactName" placeholder="Name" required />
+        <input type="tel" id="contactPhone" placeholder="Phone number" required />
+        <button type="submit" class="ghost-btn add-btn">Add</button>
+      </form>
+      <ul class="contact-list" id="contactList"></ul>
+      <p class="empty-hint" id="emptyHint">No contacts yet. Add at least one so SOS has someone to reach.</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Activity Log</h2>
+        <button class="ghost-btn" id="clearLog">Clear</button>
+      </div>
+      <ul class="log-list" id="logList"></ul>
+    </section>
+
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="location-alert.js"></script>
+  <script src="audio-detection.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

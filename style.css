@@ -1,0 +1,94 @@
+/**
+ * audio-detection.js
+ * Uses the Web Audio API to monitor the microphone locally and flag
+ * sudden, sustained loud sound (e.g. screaming, shouting). Audio is
+ * analyzed in-browser only — nothing is recorded or transmitted.
+ */
+
+const AudioDetection = (() => {
+  let audioContext = null;
+  let analyser = null;
+  let micStream = null;
+  let dataArray = null;
+  let rafId = null;
+
+  let threshold = 72; // percent, adjustable by the user
+  let loudSince = null; // timestamp when level first crossed threshold
+  const SUSTAIN_MS = 900; // must stay loud this long to count as distress
+
+  let onLevel = null; // callback(levelPercent)
+  let onDistress = null; // callback()
+
+  function setThreshold(value) {
+    threshold = value;
+  }
+
+  async function start({ onLevelUpdate, onDistressDetected } = {}) {
+    onLevel = onLevelUpdate || null;
+    onDistress = onDistressDetected || null;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error("Microphone access is not supported on this device.");
+    }
+
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioContext.createMediaStreamSource(micStream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 1024;
+    analyser.smoothingTimeConstant = 0.6;
+    source.connect(analyser);
+
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    loudSince = null;
+    tick();
+  }
+
+  function tick() {
+    analyser.getByteFrequencyData(dataArray);
+
+    // Root-mean-square style loudness estimate, scaled to 0-100.
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      sum += dataArray[i] * dataArray[i];
+    }
+    const rms = Math.sqrt(sum / dataArray.length);
+    const level = Math.min(100, Math.round((rms / 255) * 100 * 1.6));
+
+    if (onLevel) onLevel(level);
+
+    const now = performance.now();
+    if (level >= threshold) {
+      if (loudSince === null) loudSince = now;
+      if (now - loudSince >= SUSTAIN_MS) {
+        loudSince = null; // reset so it doesn't fire repeatedly every frame
+        if (onDistress) onDistress(level);
+      }
+    } else {
+      loudSince = null;
+    }
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+    if (micStream) {
+      micStream.getTracks().forEach((t) => t.stop());
+      micStream = null;
+    }
+    if (audioContext) {
+      audioContext.close();
+      audioContext = null;
+    }
+    loudSince = null;
+  }
+
+  function isRunning() {
+    return !!audioContext;
+  }
+
+  return { start, stop, setThreshold, isRunning };
+})();
